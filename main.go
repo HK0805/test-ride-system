@@ -1,16 +1,27 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
+
+	"github.com/joho/godotenv"
+
+	"test-ride-system/database"
+	"test-ride-system/handlers"
 )
 
 func main() {
-	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "Server is running 🚀")
-	})
 
-	fmt.Println("Server running on port 8080")
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
+	database.ConnectDB()
+
+	http.HandleFunc("/register", handlers.RegisterHandler)
+	http.HandleFunc("/verify-otp", handlers.VerifyOTPHandler)
+
+	log.Println("Server running on port 8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
