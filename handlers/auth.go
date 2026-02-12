@@ -55,7 +55,10 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{"token": token, "name": DefaultTeamName})
+	_ = json.NewEncoder(w).Encode(map[string]string{
+		"token": token,
+		"name":  DefaultTeamName,
+	})
 }
 
 func generateToken(email string) (string, error) {
@@ -64,15 +67,21 @@ func generateToken(email string) (string, error) {
 		return "", errors.New("JWT_SECRET not set")
 	}
 
-	claims := Claims{Email: email, Iat: time.Now().Unix(), Exp: time.Now().Add(24 * time.Hour).Unix()}
+	now := time.Now()
+	claims := Claims{
+		Email: email,
+		Iat:   now.Unix(),
+		Exp:   now.Add(24 * time.Hour).Unix(),
+	}
+
 	payload, err := json.Marshal(claims)
 	if err != nil {
 		return "", err
 	}
 
 	encodedPayload := base64.RawURLEncoding.EncodeToString(payload)
-	sig := sign(encodedPayload, secret)
-	return fmt.Sprintf("%s.%s", encodedPayload, sig), nil
+	signature := sign(encodedPayload, secret)
+	return fmt.Sprintf("%s.%s", encodedPayload, signature), nil
 }
 
 func ValidateToken(authHeader string) (*Claims, error) {
@@ -91,8 +100,8 @@ func ValidateToken(authHeader string) (*Claims, error) {
 		return nil, errors.New("JWT_SECRET not set")
 	}
 
-	expectedSig := sign(parts[0], secret)
-	if !hmac.Equal([]byte(parts[1]), []byte(expectedSig)) {
+	expectedSignature := sign(parts[0], secret)
+	if !hmac.Equal([]byte(parts[1]), []byte(expectedSignature)) {
 		return nil, errors.New("invalid token signature")
 	}
 
@@ -113,8 +122,8 @@ func ValidateToken(authHeader string) (*Claims, error) {
 	return &claims, nil
 }
 
-func sign(data string, secret string) string {
+func sign(data, secret string) string {
 	h := hmac.New(sha256.New, []byte(secret))
-	h.Write([]byte(data))
+	_, _ = h.Write([]byte(data))
 	return base64.RawURLEncoding.EncodeToString(h.Sum(nil))
 }
