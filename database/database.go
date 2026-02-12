@@ -11,7 +11,6 @@ import (
 )
 
 var Collection *mongo.Collection
-var TeamCollection *mongo.Collection
 
 func ConnectDB() {
 	uri := os.Getenv("MONGO_URI")
@@ -29,9 +28,7 @@ func ConnectDB() {
 		log.Fatal("MongoDB ping failed:", err)
 	}
 
-	db := client.Database("testRideDB")
-	Collection = db.Collection("attendees")
-	TeamCollection = db.Collection("team_members")
+	Collection = client.Database("testRideDB").Collection("attendees")
 
 	log.Println("Connected to MongoDB ✅")
 }

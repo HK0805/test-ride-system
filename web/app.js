@@ -63,11 +63,11 @@ document.getElementById("logoutBtn").addEventListener("click", () => {
 document.getElementById("registerForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   const f = Object.fromEntries(new FormData(e.target).entries());
-  logResult("Register", await post("/register", f, true));
+  logResult("Register", await post("/customer/register", f, true));
 });
 
 document.getElementById("verifyForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   const f = Object.fromEntries(new FormData(e.target).entries());
-  logResult("Verify OTP", await post("/verify-otp", f, true));
+  logResult("Verify OTP", await post("/customer/verify-otp", f, true));
 });

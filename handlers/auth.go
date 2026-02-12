@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/base64"
@@ -11,13 +10,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
-	"test-ride-system/database"
-	"test-ride-system/models"
 	"time"
-
-	"go.mongodb.org/mongo-driver/v2/bson"
-	"go.mongodb.org/mongo-driver/v2/mongo/options"
-	"golang.org/x/crypto/bcrypt"
 )
 
 const (
@@ -37,34 +30,6 @@ type Claims struct {
 	Iat   int64  `json:"iat"`
 }
 
-// EnsureDefaultTeamMember creates/updates the default teammate for direct login.
-func EnsureDefaultTeamMember() error {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	hashed, err := bcrypt.GenerateFromPassword([]byte(DefaultTeamPassword), bcrypt.DefaultCost)
-	if err != nil {
-		return err
-	}
-
-	update := bson.M{
-		"$set": bson.M{
-			"name":          DefaultTeamName,
-			"email":         strings.ToLower(DefaultTeamEmail),
-			"password_hash": string(hashed),
-			"created_at":    time.Now(),
-		},
-	}
-
-	_, err = database.TeamCollection.UpdateOne(
-		ctx,
-		bson.M{"email": strings.ToLower(DefaultTeamEmail)},
-		update,
-		options.UpdateOne().SetUpsert(true),
-	)
-	return err
-}
-
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -77,29 +42,20 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req.Email = strings.TrimSpace(strings.ToLower(req.Email))
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	var member models.TeamMember
-	if err := database.TeamCollection.FindOne(ctx, bson.M{"email": req.Email}).Decode(&member); err != nil {
+	email := strings.TrimSpace(strings.ToLower(req.Email))
+	if email != strings.ToLower(DefaultTeamEmail) || req.Password != DefaultTeamPassword {
 		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
 		return
 	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(member.PasswordHash), []byte(req.Password)); err != nil {
-		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
-		return
-	}
-
-	token, err := generateToken(member.Email)
+	token, err := generateToken(email)
 	if err != nil {
 		http.Error(w, "Failed to create token", http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{"token": token, "name": member.Name})
+	json.NewEncoder(w).Encode(map[string]string{"token": token, "name": DefaultTeamName})
 }
 
 func generateToken(email string) (string, error) {

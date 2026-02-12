@@ -30,7 +30,7 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 
 	filter := bson.M{
-		"email": attendee.Email,
+		"phone": attendee.Phone,
 		"event": attendee.Event,
 	}
 
@@ -60,15 +60,15 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Send OTP via Email
-	emailErr := SendEmailOTP(attendee.Email, otp)
-	if emailErr != nil {
-		http.Error(w, "Failed to send OTP email", http.StatusInternalServerError)
+	// Send OTP via SMS
+	smsErr := SendSMS(attendee.Phone, otp)
+	if smsErr != nil {
+		http.Error(w, "Failed to send OTP SMS", http.StatusInternalServerError)
 		return
 	}
 
 	response := map[string]string{
-		"message": "Customer registered. OTP sent via email.",
+		"message": "User registered. OTP sent via SMS.",
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
