@@ -3,12 +3,15 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"strings"
 	"test-ride-system/database"
 	"test-ride-system/models"
 	"time"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -26,6 +29,8 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	attendee.Email = strings.TrimSpace(strings.ToLower(attendee.Email))
+
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -34,9 +39,7 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		"event": attendee.Event,
 	}
 
-	existing := database.Collection.FindOne(ctx, filter)
-
-	if existing.Err() == nil {
+	if database.Collection.FindOne(ctx, filter).Err() == nil {
 		http.Error(w, "User already registered for this event", http.StatusConflict)
 		return
 	}
@@ -49,12 +52,24 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	attendee.OTP = string(hashedOTP)
-	attendee.Verified = false
-	attendee.CreatedAt = time.Now()
-	attendee.OTPExpiry = time.Now().Add(10 * time.Minute)
-	attendee.OTPAttempts = 3 // For rate limiting, initialize to 3
+	now := time.Now()
+	pendingDoc := bson.M{
+		"name":         attendee.Name,
+		"email":        attendee.Email,
+		"phone":        attendee.Phone,
+		"event":        attendee.Event,
+		"otp":          string(hashedOTP),
+		"otp_expiry":   now.Add(10 * time.Minute),
+		"otp_attempts": 3,
+		"created_at":   now,
+	}
 
-	_, err = database.Collection.InsertOne(ctx, attendee)
+	_, err = database.PendingCollection.UpdateOne(
+		ctx,
+		filter,
+		bson.M{"$set": pendingDoc},
+		options.UpdateOne().SetUpsert(true),
+	)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -63,12 +78,12 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	// Send OTP via Email
 	emailErr := SendEmailOTP(attendee.Email, otp)
 	if emailErr != nil {
-		http.Error(w, "Failed to send OTP email", http.StatusInternalServerError)
+		http.Error(w, fmt.Sprintf("Failed to send OTP email: %v", emailErr), http.StatusInternalServerError)
 		return
 	}
 
 	response := map[string]string{
-		"message": "Customer registered. OTP sent via email.",
+		"message": "OTP sent via email. Customer will be registered only after OTP verification.",
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)

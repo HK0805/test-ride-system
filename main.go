@@ -11,7 +11,6 @@ import (
 )
 
 func main() {
-
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")
@@ -19,7 +18,6 @@ func main() {
 
 	database.ConnectDB()
 
-	http.HandleFunc("/signup", handlers.SignupHandler)
 	http.HandleFunc("/login", handlers.LoginHandler)
 	http.HandleFunc("/register", handlers.RequireAuth(handlers.RegisterHandler))
 	http.HandleFunc("/verify-otp", handlers.RequireAuth(handlers.VerifyOTPHandler))

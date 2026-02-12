@@ -12,6 +12,7 @@ import (
 
 var Collection *mongo.Collection
 var TeamCollection *mongo.Collection
+var PendingCollection *mongo.Collection
 
 func ConnectDB() {
 	uri := os.Getenv("MONGO_URI")
@@ -32,6 +33,7 @@ func ConnectDB() {
 	db := client.Database("testRideDB")
 	Collection = db.Collection("attendees")
 	TeamCollection = db.Collection("team_members")
+	PendingCollection = db.Collection("pending_attendees")
 
 	log.Println("Connected to MongoDB ✅")
 }

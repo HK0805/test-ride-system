@@ -1,52 +1,90 @@
 const output = document.getElementById("output");
-const tokenState = document.getElementById("tokenState");
+const loginView = document.getElementById("loginView");
+const appView = document.getElementById("appView");
+const memberName = document.getElementById("memberName");
+
 let token = localStorage.getItem("team_token") || "";
-refreshTokenState();
+let savedName = localStorage.getItem("team_name") || "harikeerthan";
 
-function refreshTokenState() {
-  tokenState.textContent = token ? "Token: logged in" : "Token: not logged in";
+function showLogin() {
+  loginView.classList.remove("hidden");
+  appView.classList.add("hidden");
 }
 
-function logResult(title, data) {
-  output.textContent = `${title}\n${JSON.stringify(data, null, 2)}`;
+function showApp() {
+  loginView.classList.add("hidden");
+  appView.classList.remove("hidden");
+  memberName.textContent = savedName;
 }
 
-async function post(url, body, auth = false) {
+function printResult(title, result) {
+  output.textContent = `${title}\n${JSON.stringify(result, null, 2)}`;
+}
+
+async function postJSON(url, body, withAuth = false) {
   const headers = { "Content-Type": "application/json" };
-  if (auth && token) headers.Authorization = `Bearer ${token}`;
-  const res = await fetch(url, { method: "POST", headers, body: JSON.stringify(body) });
-  const text = await res.text();
-  let parsed;
-  try { parsed = JSON.parse(text); } catch { parsed = { message: text }; }
-  return { ok: res.ok, status: res.status, data: parsed };
+  if (withAuth && token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body),
+  });
+
+  const raw = await res.text();
+  let data;
+  try {
+    data = JSON.parse(raw);
+  } catch {
+    data = { message: raw };
+  }
+
+  return { ok: res.ok, status: res.status, data };
 }
 
-document.getElementById("signupForm").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const f = Object.fromEntries(new FormData(e.target).entries());
-  logResult("Signup", await post("/signup", f));
-});
+if (token) {
+  showApp();
+} else {
+  showLogin();
+}
 
-document.getElementById("loginForm").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const f = Object.fromEntries(new FormData(e.target).entries());
-  const res = await post("/login", f);
-  if (res.ok && res.data.token) {
-    token = res.data.token;
+document.getElementById("loginForm").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const payload = Object.fromEntries(new FormData(event.target).entries());
+  const result = await postJSON("/login", payload);
+
+  if (result.ok && result.data.token) {
+    token = result.data.token;
+    savedName = result.data.name || "harikeerthan";
     localStorage.setItem("team_token", token);
-    refreshTokenState();
+    localStorage.setItem("team_name", savedName);
+    showApp();
   }
-  logResult("Login", res);
+
+  printResult("Login", result);
 });
 
-document.getElementById("registerForm").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const f = Object.fromEntries(new FormData(e.target).entries());
-  logResult("Register", await post("/register", f, true));
+document.getElementById("logoutBtn").addEventListener("click", () => {
+  token = "";
+  savedName = "harikeerthan";
+  localStorage.removeItem("team_token");
+  localStorage.removeItem("team_name");
+  showLogin();
+  output.textContent = "Logged out.";
 });
 
-document.getElementById("verifyForm").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const f = Object.fromEntries(new FormData(e.target).entries());
-  logResult("Verify OTP", await post("/verify-otp", f, true));
+document.getElementById("registerForm").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const payload = Object.fromEntries(new FormData(event.target).entries());
+  const result = await postJSON("/register", payload, true);
+  printResult("Register", result);
+});
+
+document.getElementById("verifyForm").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const payload = Object.fromEntries(new FormData(event.target).entries());
+  const result = await postJSON("/verify-otp", payload, true);
+  printResult("Verify OTP", result);
 });
