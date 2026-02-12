@@ -18,9 +18,23 @@ func main() {
 	}
 
 	database.ConnectDB()
+	if err := handlers.EnsureDefaultTeamMember(); err != nil {
+		log.Fatal("Failed to prepare default team member:", err)
+	}
 
-	http.HandleFunc("/register", handlers.RegisterHandler)
-	http.HandleFunc("/verify-otp", handlers.VerifyOTPHandler)
+	http.HandleFunc("/login", handlers.LoginHandler)
+	http.HandleFunc("/register", handlers.RequireAuth(handlers.RegisterHandler))
+	http.HandleFunc("/verify-otp", handlers.RequireAuth(handlers.VerifyOTPHandler))
+
+	fs := http.FileServer(http.Dir("./web"))
+	http.Handle("/web/", http.StripPrefix("/web/", fs))
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/" {
+			http.NotFound(w, r)
+			return
+		}
+		http.ServeFile(w, r, "./web/index.html")
+	})
 
 	log.Println("Server running on port 8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))

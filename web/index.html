@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Test Ride Console</title>
+  <link rel="stylesheet" href="/web/style.css" />
+</head>
+<body>
+  <main class="container">
+    <h1>Test Ride Console</h1>
+    <p class="sub">Login → register customer → verify OTP</p>
+
+    <section class="card" id="loginView">
+      <h2>Team Login</h2>
+      <form id="loginForm">
+        <input name="email" type="email" placeholder="Email" value="hariroxx47@gmail" required />
+        <input name="password" type="password" placeholder="Password" value="Scotty@123" required />
+        <button type="submit">Login</button>
+      </form>
+    </section>
+
+    <section id="appView" class="hidden">
+      <section class="card">
+        <h2>Welcome, <span id="memberName">Team Member</span></h2>
+        <button id="logoutBtn" class="secondary">Logout</button>
+      </section>
+
+      <section class="card">
+        <h2>1) Register Customer (Send Email OTP)</h2>
+        <form id="registerForm">
+          <input name="name" placeholder="Customer Name" required />
+          <input name="email" type="email" placeholder="Customer Email" required />
+          <input name="phone" placeholder="Phone" required />
+          <input name="event" placeholder="Event" required />
+          <button type="submit">Register + Send OTP</button>
+        </form>
+      </section>
+
+      <section class="card">
+        <h2>2) Verify Customer OTP</h2>
+        <form id="verifyForm">
+          <input name="email" type="email" placeholder="Customer Email" required />
+          <input name="otp" placeholder="OTP" required />
+          <button type="submit">Verify OTP</button>
+        </form>
+      </section>
+    </section>
+
+    <pre id="output">Please login to continue.</pre>
+  </main>
+
+  <script src="/web/app.js"></script>
+</body>
+</html>
