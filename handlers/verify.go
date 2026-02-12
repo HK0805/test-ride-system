@@ -15,7 +15,7 @@ import (
 )
 
 type VerifyRequest struct {
-	Phone string `json:"phone"`
+	Email string `json:"email"`
 	OTP   string `json:"otp"`
 }
 
@@ -35,7 +35,7 @@ func VerifyOTPHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	filter := bson.M{"phone": req.Phone}
+	filter := bson.M{"email": req.Email}
 
 	var user models.Attendee
 

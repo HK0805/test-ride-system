@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Test Ride Console</title>
+  <link rel="stylesheet" href="/web/style.css" />
+</head>
+<body>
+  <main class="container">
+    <h1>Test Ride Console</h1>
+    <p class="sub">Team login + customer email OTP verification</p>
+
+    <section class="card">
+      <h2>1) Team Signup</h2>
+      <form id="signupForm">
+        <input name="name" placeholder="Name" required />
+        <input name="email" type="email" placeholder="Email" required />
+        <input name="password" type="password" placeholder="Password" required />
+        <input name="setup_key" type="password" placeholder="Setup Key" required />
+        <button type="submit">Create Team Member</button>
+      </form>
+    </section>
+
+    <section class="card">
+      <h2>2) Team Login</h2>
+      <form id="loginForm">
+        <input name="email" type="email" placeholder="Email" required />
+        <input name="password" type="password" placeholder="Password" required />
+        <button type="submit">Login</button>
+      </form>
+      <small id="tokenState">Token: not logged in</small>
+    </section>
+
+    <section class="card">
+      <h2>3) Register Customer (Send Email OTP)</h2>
+      <form id="registerForm">
+        <input name="name" placeholder="Customer Name" required />
+        <input name="email" type="email" placeholder="Customer Email" required />
+        <input name="phone" placeholder="Phone" required />
+        <input name="event" placeholder="Event" required />
+        <button type="submit">Register + Send OTP</button>
+      </form>
+    </section>
+
+    <section class="card">
+      <h2>4) Verify Customer OTP</h2>
+      <form id="verifyForm">
+        <input name="email" type="email" placeholder="Customer Email" required />
+        <input name="otp" placeholder="OTP" required />
+        <button type="submit">Verify OTP</button>
+      </form>
+    </section>
+
+    <pre id="output">Ready.</pre>
+  </main>
+
+  <script src="/web/app.js"></script>
+</body>
+</html>
