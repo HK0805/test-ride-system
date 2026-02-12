@@ -14,6 +14,7 @@ import (
 )
 
 const (
+	// Login-only mode uses a single preconfigured teammate credential.
 	DefaultTeamName     = "harikeerthan"
 	DefaultTeamEmail    = "hariroxx47@gmail"
 	DefaultTeamPassword = "Scotty@123"
